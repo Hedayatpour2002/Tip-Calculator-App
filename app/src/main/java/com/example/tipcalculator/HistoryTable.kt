@@ -66,7 +66,12 @@ fun HistoryTable(historyList: List<History>, onDelete: (History) -> Unit, onDele
                 modifier = Modifier
                     .width(40.dp)
                     .padding(vertical = 8.dp)
-                    .clickable { onDeleteAll() },
+                    .clickable {
+                        onDeleteAll()
+                        Toast
+                            .makeText(context, "items deleted ❎", Toast.LENGTH_SHORT)
+                            .show()
+                    },
 
                 )
         }
@@ -113,7 +118,7 @@ fun HistoryTable(historyList: List<History>, onDelete: (History) -> Unit, onDele
                         .clickable {
                             onDelete(it)
                             Toast
-                                .makeText(context, "item deleted", Toast.LENGTH_SHORT)
+                                .makeText(context, "item deleted ❎", Toast.LENGTH_SHORT)
                                 .show()
                         },
                     verticalArrangement = Arrangement.Center,

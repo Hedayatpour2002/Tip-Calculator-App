@@ -131,7 +131,7 @@ fun MainUi(modifier: Modifier = Modifier) {
                     },
                     modifier = Modifier
                         .background(white)
-                        .padding(8.dp),
+                        .padding(8.dp).weight(1f),
                     shape = RoundedCornerShape(50),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
