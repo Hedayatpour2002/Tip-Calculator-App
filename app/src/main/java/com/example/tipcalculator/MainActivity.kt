@@ -1,6 +1,7 @@
 package com.example.tipcalculator
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -12,9 +13,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedTextField
@@ -26,12 +30,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -41,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.example.tipcalculator.ui.theme.TipCalculatorTheme
 import com.example.tipcalculator.ui.theme.purpleGradient
 import com.example.tipcalculator.ui.theme.white
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +65,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainUi(modifier: Modifier = Modifier) {
+    val scrollState = rememberScrollState()
+
 
     var billAmount by remember { mutableStateOf("") }
     var percentage by remember { mutableFloatStateOf(15f) }
@@ -77,6 +86,10 @@ fun MainUi(modifier: Modifier = Modifier) {
     var persons by remember { mutableFloatStateOf(1f) }
     var perPersonShare by remember { mutableStateOf(totalAmount) }
 
+    val historyList = remember { mutableStateListOf<History>() }
+    val context = LocalContext.current
+
+
     perPersonShare =
         "%.2f".format((totalAmount.toFloatOrNull() ?: 0f) / "%.0f".format(persons).toFloat())
 
@@ -88,7 +101,8 @@ fun MainUi(modifier: Modifier = Modifier) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(purpleGradient),
+            .background(purpleGradient)
+            .verticalScroll(scrollState),
         horizontalAlignment = Alignment.CenterHorizontally,
 
         ) {
@@ -162,12 +176,11 @@ fun MainUi(modifier: Modifier = Modifier) {
             ScrollableTabRow(
                 selectedTabIndex = selectedTab, modifier = Modifier.padding(8.dp, 18.dp)
             ) {
-                percentageButtons.forEachIndexed() { index, item ->
+                percentageButtons.forEachIndexed { index, item ->
                     Button(
                         onClick = {
                             percentage = item.toFloat()
                             selectedTab = index
-
                         }, modifier = Modifier
                             .padding(4.dp)
                             .width(100.dp)
@@ -254,25 +267,64 @@ fun MainUi(modifier: Modifier = Modifier) {
                 )
             }
 
-            Button(
-                onClick = {
-                    billAmount = ""
-                    selectedCurrency = currencies[0]
-                    percentage = 15f
-                    persons = 1f
+            Row(modifier = Modifier.padding(vertical = 10.dp, horizontal = 8.dp)) {
+                Button(
+                    onClick = {
+                        billAmount = ""
+                        selectedCurrency = currencies[0]
+                        percentage = 15f
+                        persons = 1f
 
-                },
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 60.dp, vertical = 10.dp)
-            ) {
-                Text(text = "Clear")
+                    },
+                    Modifier
+                        .padding(end = 10.dp)
+                        .weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xffC70000)
+                    ),
+                ) {
+                    Text(text = "Clear")
+                }
+
+                Button(
+                    onClick = {
+                        val isBillAmountValid: Boolean =
+                            billAmount.toIntOrNull() != null || billAmount.toFloatOrNull() != null
+                        if (isBillAmountValid) {
+                            historyList.add(
+                                History(
+                                    id = historyList.lastIndex,
+                                    currency = selectedCurrencySymbol,
+                                    billAmount = billAmount,
+                                    tipAmount = tipAmount,
+                                    totalAmount = totalAmount,
+                                    perPerson = perPersonShare
+                                )
+                            )
+
+                            billAmount = ""
+                        } else {
+                            Toast.makeText(
+                                context, "❌ Please enter a valid bill amount.", Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                    Modifier
+                        .padding(start = 10.dp)
+                        .weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xff4BB543)
+                    ),
+                ) {
+                    Text(text = "Add to history")
+                }
             }
         }
 
-
+        HistoryTable(historyList = historyList,
+            onDelete = { historyList.remove(it) },
+            onDeleteAll = { historyList.clear() })
     }
-
 }
 
 @Preview(showBackground = true)
